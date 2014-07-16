@@ -227,7 +227,7 @@ local function GetGuildEvents()
 		if numEvents ~= 0 then
 			for i = 1, numEvents do
 			local title2, hour2, minute2, calendarType2, _, _, _, _, inviteStatus, invitedBy = CalendarGetDayEvent(monthOffset, day, i)
-				if (inviteStatus == 8) and (calendarType2 == "GUILD_EVENT") and not checkDoubleEvents(title2, hour2, minute, tmpTable) then
+				if (inviteStatus == 8) and (calendarType2 == "GUILD_EVENT") and not checkDoubleEvents(title2, hour2, minute2, tmpTable) then
 					pendinginvites = pendinginvites + 1
 					if pendinginvites > 1 then
 						font2:SetText(string.format(L["GuildEvents"], pendinginvites))
