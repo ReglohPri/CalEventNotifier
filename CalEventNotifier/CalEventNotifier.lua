@@ -191,22 +191,24 @@ local function GetInvites()
 	end
 end
 
-local function checkDoubleEvents(xTitle, xHour, xMin, tmpTable)
+local function checkDoubleEvents(xTitle, xDay, xMonthOffset, xHour, xMin, tmpTable)
 	local cIndex, i = 0
 
 	i = table.maxn(tmpTable)
 
 	if (i == 0) then
-		table.insert(tmpTable, {Title = xTitle, Hour = xHour, Min = xMin})
+		table.insert(tmpTable, {Title = xTitle, Day = xDay, MonthOffset = xMonthOffset, Hour = xHour, Min = xMin})
 		return false
 	else
 		for cIndex = 1, i do
-			if (tmpTable[cIndex].Title == xTitle) and (tmpTable[cIndex].Hour == xHour) and (tmpTable[cIndex].Min == xMin) then
+			if (tmpTable[cIndex].Title == xTitle) and (tmpTable[cIndex].Day == xDay) and
+			   (tmpTable[cIndex].MonthOffset == xMonthOffset) and
+			   (tmpTable[cIndex].Hour == xHour) and (tmpTable[cIndex].Min == xMin) then
 				return true
 			end
 		end
 
-		table.insert(tmpTable, {Title = xTitle, Hour = xHour, Min = xMin})
+		table.insert(tmpTable, {Title = xTitle, Day = xDay, MonthOffset = xMonthOffset, Hour = xHour, Min = xMin})
 		return false
 	end
 end
@@ -227,7 +229,7 @@ local function GetGuildEvents()
 		if numEvents ~= 0 then
 			for i = 1, numEvents do
 			local title2, hour2, minute2, calendarType2, _, _, _, _, inviteStatus, invitedBy = CalendarGetDayEvent(monthOffset, day, i)
-				if (inviteStatus == 8) and (calendarType2 == "GUILD_EVENT") and not checkDoubleEvents(title2, hour2, minute2, tmpTable) then
+				if (inviteStatus == 8) and (calendarType2 == "GUILD_EVENT") and not checkDoubleEvents(title2, day, monthOffset, hour2, minute2, tmpTable) then
 					pendinginvites = pendinginvites + 1
 					if pendinginvites > 1 then
 						font2:SetText(string.format(L["GuildEvents"], pendinginvites))
