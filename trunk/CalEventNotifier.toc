@@ -1,0 +1,9 @@
+## Interface: 50400
+## Title: CalEventNotifier
+## Notes: Notifies you of new calendar event invites and reminds of upcoming events on all characters
+## SavedVariables: EventNotifies
+## Author: Reglohpri
+## Version: 1.03
+
+locale.lua
+CalEventNotifier.lua
