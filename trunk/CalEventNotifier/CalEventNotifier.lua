@@ -1,4 +1,7 @@
-﻿--inviteStatus
+﻿local _, vars = ...;
+local L = vars.L
+
+--inviteStatus
 
 --CALENDAR_INVITESTATUS_INVITED      = 1
 --CALENDAR_INVITESTATUS_ACCEPTED     = 2
@@ -24,8 +27,7 @@ local elapsedTime = 0
 local frame = CreateFrame("Frame")
 frame:Hide();
 frame:SetHeight(120)
--- H.Schuetz - changed from 360 to 420
-frame:SetWidth(420)
+frame:SetWidth(430)
 frame:SetPoint("CENTER", UIParent, "CENTER", 0, 50)
 frame:EnableMouse(true)
 frame:SetBackdrop({
@@ -70,8 +72,7 @@ local button = CreateFrame("Button", "CalendarButton", frame, "UIPanelButtonTemp
 button:SetHeight(25)
 button:SetWidth(125)
 button:SetPoint("BOTTOM", frame, "BOTTOM", 0, 15)
--- H.Schuetz - German translation
-button:SetText("Zeigen")
+button:SetText(L["View"])
 button:RegisterForClicks("AnyUp")
 button:SetScript("OnClick", button_OnClick)
 
@@ -79,7 +80,7 @@ local okButton = CreateFrame("Button", "OkButton", frame, "UIPanelButtonTemplate
 okButton:SetHeight(25)
 okButton:SetWidth(125)
 okButton:SetPoint("BOTTOM", frame, "BOTTOM", 0, 15)
-okButton:SetText("OK")
+okButton:SetText(L["Ok"])
 okButton:Hide()
 okButton:RegisterForClicks("AnyUp")
 okButton:SetScript("OnClick", okButton_OnClick)
@@ -87,7 +88,7 @@ okButton:SetScript("OnClick", okButton_OnClick)
 local close = CreateFrame("Button", "CloseButton", frame, "UIPanelCloseButton")
 close:SetPoint("TOPRIGHT", frame, "TOPRIGHT", -8, -8)
 
-local function GetOwnCharIndex (cName, cArray)
+local function GetOwnCharIndex(cName, cArray)
 	local cIndex, i = 0
 
 	i = table.maxn(cArray)
@@ -147,20 +148,13 @@ local todaysevents = 0
 		for i = 1, numtodaysEvents do
 			local title3, hour3, minute3, calendarType3, _, _, _, _, inviteStatus3, invitedBy3 = CalendarGetDayEvent(0, curday, i)
 			if calendarType3 == "PLAYER" or calendarType3 == "GUILD_EVENT" then
-				-- H.Schuetz - the origin was wrong, because we got a break at the first found inviteStatus with 8, 3 or 5
-				-- H.Schuetz - but we need a collect of all right invites
-				--if inviteStatus3 == 8 or inviteStatus3 == 3 or inviteStatus3 == 5 then
 				if inviteStatus3 ~= 8 and inviteStatus3 ~= 3 and inviteStatus3 ~= 5 then
-				--	return
-				--else
-					--DEFAULT_CHAT_FRAME:AddMessage(string.format("|cffffff00CalendarNotify:|r %s is scheduled for today at %02d:%02d.", title3, hour3, minute3 ),0.0, 1.0, 0.0, nil, true)
 					InsertNotifies(MyChar, EventNotifies, title3, curyear, curmonth, curday, hour3, minute3)
 					todaysevents = todaysevents + 1
-					-- H.Schuetz - German translation
 					if todaysevents > 1 then
-						font3:SetText(string.format("Du hast heute %s geplante Veranstaltungen.", todaysevents ))
+						font3:SetText(string.format(L["Scheduled Events"], todaysevents ))
 					else
-						font3:SetText(string.format("Du hast heute %s geplante Veranstaltung.", todaysevents ))
+						font3:SetText(L["Scheduled Event"])
 					end
 					if not frame:IsShown() then
 						button:Show()
@@ -178,16 +172,14 @@ local todaysevents = 0
 end
 
 local function GetInvites()
-	-- H.Schuetz - Set a variable for CalendarGetNumPendingInvites, so we must not call more than once this function
 	local MyPendingInvites = CalendarGetNumPendingInvites()
 
 	font:SetText("")
 	if MyPendingInvites ~= 0 then
-		-- H.Schuetz - German translation
 		if MyPendingInvites > 1 then
-			font:SetText(string.format("Du hast %s ausstehende Einladungen zu einer Veranstaltung!", MyPendingInvites))
+			font:SetText(string.format(L["Pending Invites"], MyPendingInvites))
 		else
-			font:SetText(string.format("Du hast %s ausstehende Einladung zu einer Veranstaltung!", MyPendingInvites))
+			font:SetText(L["Pending Invite"])
 		end
 		if not frame:IsShown() then
 			button:Show()
@@ -199,10 +191,32 @@ local function GetInvites()
 	end
 end
 
+local function checkDoubleEvents(xTitle, xHour, xMin, tmpTable)
+	local cIndex, i = 0
+
+	i = table.maxn(tmpTable)
+
+	if (i == 0) then
+		table.insert(tmpTable, {Title = xTitle, Hour = xHour, Min = xMin})
+		return false
+	else
+		for cIndex = 1, i do
+			if (tmpTable[cIndex].Title == xTitle) and (tmpTable[cIndex].Hour == xHour) and (tmpTable[cIndex].Min == xMin) then
+				return true
+			end
+		end
+
+		table.insert(tmpTable, {Title = xTitle, Hour = xHour, Min = xMin})
+		return false
+	end
+end
+
 local function GetGuildEvents()
-local pendinginvites = 0
-local numguildEvents = CalendarGetNumGuildEvents()
-local currentweekday, currentmonth, currentday, currentyear = CalendarGetDate()
+	local pendinginvites = 0
+	local numguildEvents = CalendarGetNumGuildEvents()
+	local tmpTable = {}
+	local currentweekday, currentmonth, currentday, currentyear = CalendarGetDate()
+
 	font2:SetText("")
 	for eventIndex = 1, numguildEvents do
 
@@ -213,13 +227,12 @@ local currentweekday, currentmonth, currentday, currentyear = CalendarGetDate()
 		if numEvents ~= 0 then
 			for i = 1, numEvents do
 			local title2, hour2, minute2, calendarType2, _, _, _, _, inviteStatus, invitedBy = CalendarGetDayEvent(monthOffset, day, i)
-				if inviteStatus == 8 then
+				if (inviteStatus == 8) and (calendarType2 == "GUILD_EVENT") and not checkDoubleEvents(title2, hour2, minute, tmpTable) then
 					pendinginvites = pendinginvites + 1
-					-- H.Schuetz - German translation
 					if pendinginvites > 1 then
-						font2:SetText(string.format("Du hast %s ausstehende Gildenveranstaltungen!", pendinginvites))
+						font2:SetText(string.format(L["GuildEvents"], pendinginvites))
 					else
-						font2:SetText(string.format("Du hast %s ausstehende Gildenveranstaltung!", pendinginvites))
+						font2:SetText(L["GuildEvent"])
 					end
 					if not frame:IsShown() then
 						button:Show()
@@ -275,8 +288,6 @@ textFrame:SetAlpha(0)
 textFrame:SetPoint("CENTER", UIParent, "CENTER", 0, 250)
 textFrame:SetHeight(30)
 textFrame:SetWidth(600)
-
---local dummyChar = "Heidi"
 
 local tFont = textFrame:CreateFontString("NotifyMsg", "ARTWORK", "GameFontNormal")
 tFont:SetFont("Fonts\\FRIZQT__.TTF", 20, "OUTLINE")
@@ -335,11 +346,11 @@ notifyTimer:SetScript("OnUpdate", function (self, elapsed)
 								if (leftTime >= 3) and not fading then
 									fadeTime = currTime + 15
 									fading = true
-									tFont:SetText(string.format("|cFFFF0000 %s: |cff00E5EE%s |rbeginnt in |cff00E5EE%d |rMinuten", EventNotifies[cIndex].Name,
+									tFont:SetText(string.format(L["TxtEventStartsSoon"], EventNotifies[cIndex].Name,
 																EventNotifies[cIndex][EventNotifies[cIndex].Name][i].EventTitle, leftTime))
 									UIFrameFadeIn(textFrame, 3, 0, 1)
 								elseif (leftTime >= 0) then
-									font:SetText(string.format("%s beginnt in %d Minuten", EventNotifies[cIndex][EventNotifies[cIndex].Name][i].EventTitle, leftTime))
+									font:SetText(string.format(L["DlgEventStartsSoon"], EventNotifies[cIndex][EventNotifies[cIndex].Name][i].EventTitle, leftTime))
 									font2:SetText("")
 									font3:SetText("")
 									button:Show()
@@ -375,11 +386,11 @@ notifyTimer:SetScript("OnUpdate", function (self, elapsed)
 												if (leftTime >= 3) and not fading then
 													fadeTime = currTime + 15
 													fading = true
-													tFont:SetText(string.format("|cFFFF0000 %s: |cff00E5EE%s |rbeginnt in |cff00E5EE%d |rMinuten", EventNotifies[cInd].Name,
+													tFont:SetText(string.format(L["TxtEventStartsSoon"], EventNotifies[cInd].Name,
 																				EventNotifies[cInd][EventNotifies[cInd].Name][i2].EventTitle, leftTime))
 													UIFrameFadeIn(textFrame, 3, 0, 1)
 												elseif (leftTime >= 0) then
-													font:SetText(string.format("|cFFFF0000 %s: |r%s beginnt in %d Minuten", EventNotifies[cInd].Name,
+													font:SetText(string.format(L["Dlg2EventStartsSoon"], EventNotifies[cInd].Name,
 																			   EventNotifies[cInd][EventNotifies[cInd].Name][i2].EventTitle, leftTime))
 													font2:SetText("")
 													font3:SetText("")
@@ -387,9 +398,6 @@ notifyTimer:SetScript("OnUpdate", function (self, elapsed)
 													okButton:Show()
 													frame:Show()
 													PlaySound("AlarmClockwarning3")
-													--if CalendarFrame and CalendarFrame:IsVisible() then
-													--	frame:Hide()
-													--end
 												end
 											elseif (currTime >= lastTime) then
 												lastTime = 0
@@ -424,11 +432,11 @@ notifyTimer:SetScript("OnUpdate", function (self, elapsed)
 											if (leftTime >= 3) and not fading then
 												fadeTime = currTime + 15
 												fading = true
-												tFont:SetText(string.format("|cFFFF0000 %s: |cff00E5EE%s |rbeginnt in |cff00E5EE%d |rMinuten", EventNotifies[cInd].Name,
+												tFont:SetText(string.format(L["TxtEventStartsSoon"], EventNotifies[cInd].Name,
 																			EventNotifies[cInd][EventNotifies[cInd].Name][i2].EventTitle, leftTime))
 												UIFrameFadeIn(textFrame, 3, 0, 1)
 											elseif (leftTime >= 0) then
-												font:SetText(string.format("|cFFFF0000 %s: |r%s beginnt in %d Minuten", EventNotifies[cInd].Name,
+												font:SetText(string.format(L["Dlg2EventStartsSoon"], EventNotifies[cInd].Name,
 																			EventNotifies[cInd][EventNotifies[cInd].Name][i2].EventTitle, leftTime))
 												font2:SetText("")
 												font3:SetText("")
@@ -436,9 +444,6 @@ notifyTimer:SetScript("OnUpdate", function (self, elapsed)
 												okButton:Show()
 												frame:Show()
 												PlaySound("AlarmClockwarning3")
-												--if CalendarFrame and CalendarFrame:IsVisible() then
-												--	frame:Hide()
-												--end
 											end
 										elseif (currTime >= lastTime) then
 											lastTime = 0
@@ -472,11 +477,11 @@ notifyTimer:SetScript("OnUpdate", function (self, elapsed)
 									if (leftTime >= 3) and not fading then
 										fadeTime = currTime + 15
 										fading = true
-										tFont:SetText(string.format("|cFFFF0000 %s: |cff00E5EE%s |rbeginnt in |cff00E5EE%d |rMinuten", EventNotifies[cInd].Name,
+										tFont:SetText(string.format(L["TxtEventStartsSoon"], EventNotifies[cInd].Name,
 																	EventNotifies[cInd][EventNotifies[cInd].Name][i2].EventTitle, leftTime))
 										UIFrameFadeIn(textFrame, 3, 0, 1)
 									elseif (leftTime >= 0) then
-										font:SetText(string.format("|cFFFF0000 %s: |r%s beginnt in %d Minuten", EventNotifies[cInd].Name,
+										font:SetText(string.format(L["Dlg2EventStartsSoon"], EventNotifies[cInd].Name,
 																   EventNotifies[cInd][EventNotifies[cInd].Name][i2].EventTitle, leftTime))
 										font2:SetText("")
 										font3:SetText("")
@@ -484,9 +489,6 @@ notifyTimer:SetScript("OnUpdate", function (self, elapsed)
 										okButton:Show()
 										frame:Show()
 										PlaySound("AlarmClockwarning3")
-										--if CalendarFrame and CalendarFrame:IsVisible() then
-										--	frame:Hide()
-										--end
 									end
 								elseif (currTime >= lastTime) then
 									lastTime = 0
