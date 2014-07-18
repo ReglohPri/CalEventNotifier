@@ -13,6 +13,7 @@ local L = vars.L
 --CALENDAR_INVITESTATUS_NOT_SIGNEDUP = 8
 --CALENDAR_INVITESTATUS_TENTATIVE    = 9
 
+
 EventNotifies = {}
 local addonLoaded = false
 local todayCheck = true
@@ -23,6 +24,8 @@ local lastTime = 0
 local fadeTime = 0
 local fading = false
 local elapsedTime = 0
+local inCombat = false
+local invitesInCombat = false
 
 local frame = CreateFrame("Frame")
 frame:Hide();
@@ -49,6 +52,8 @@ frame:RegisterEvent("CALENDAR_UPDATE_PENDING_INVITES")
 frame:RegisterEvent("PLAYER_ENTERING_WORLD")
 frame:RegisterEvent("CALENDAR_UPDATE_EVENT_LIST")
 frame:RegisterEvent("CALENDAR_UPDATE_GUILD_EVENTS")
+frame:RegisterEvent("PLAYER_REGEN_ENABLED")
+frame:RegisterEvent("PLAYER_REGEN_DISABLED")
 
 
 local font = frame:CreateFontString("NewInvite", "ARTWORK", "GameFontNormal")
@@ -136,6 +141,28 @@ local function InsertNotifies(cName, cArray, aTitle, aYear, aMonth, aDay, aHour,
 	end
 end
 
+function checkRemovedEvents()
+	local tmpStr = ""
+	local tmpStrLen = 0
+
+	tmpStr = font3:GetText()
+	if tmpStr ~= nil then
+		tmpStrLen = tmpStrLen + string.len(tmpStr)
+	end
+	tmpStr = font:GetText()
+	if tmpStr ~= nil then
+		tmpStrLen = tmpStrLen + string.len(tmpStr)
+	end
+	tmpStr = font2:GetText()
+	if tmpStr ~= nil then
+		tmpStrLen = tmpStrLen + string.len(tmpStr)
+	end
+
+	if (tmpStrLen == 0) then
+		font2:SetText(L["EventRemoved"])
+	end
+end
+
 local function CheckToday()
 local curweekday, curmonth, curday, curyear = CalendarGetDate()
 local numtodaysEvents = CalendarGetNumDayEvents(0, curday)
@@ -151,11 +178,14 @@ local todaysevents = 0
 				if inviteStatus3 ~= 8 and inviteStatus3 ~= 3 and inviteStatus3 ~= 5 then
 					InsertNotifies(MyChar, EventNotifies, title3, curyear, curmonth, curday, hour3, minute3)
 					todaysevents = todaysevents + 1
-					if todaysevents > 1 then
+					if (todaysevents > 1) then
 						font3:SetText(string.format(L["Scheduled Events"], todaysevents ))
-					else
+					elseif (todaysevents == 1) then
 						font3:SetText(L["Scheduled Event"])
 					end
+
+					checkRemovedEvents()
+
 					if not frame:IsShown() then
 						button:Show()
 						frame:Show()
@@ -168,19 +198,28 @@ local todaysevents = 0
 		frame:Hide()
 	end
 
+	if frame:IsShown() then
+		checkRemovedEvents()
+	end
+
 	iTimerCanStart = true
 end
 
 local function GetInvites()
 	local MyPendingInvites = CalendarGetNumPendingInvites()
+	local tmpStr = ""
+	local tmpStrLen = 0
 
 	font:SetText("")
 	if MyPendingInvites ~= 0 then
-		if MyPendingInvites > 1 then
+		if (MyPendingInvites > 1) then
 			font:SetText(string.format(L["Pending Invites"], MyPendingInvites))
-		else
+		elseif (MyPendingInvites == 1) then
 			font:SetText(L["Pending Invite"])
 		end
+
+		checkRemovedEvents()
+
 		if not frame:IsShown() then
 			button:Show()
 			frame:Show()
@@ -188,6 +227,10 @@ local function GetInvites()
 	end
 	if CalendarFrame and CalendarFrame:IsShown() then
 		frame:Hide()
+	end
+
+	if frame:IsShown() then
+		checkRemovedEvents()
 	end
 end
 
@@ -218,6 +261,8 @@ local function GetGuildEvents()
 	local numguildEvents = CalendarGetNumGuildEvents()
 	local tmpTable = {}
 	local currentweekday, currentmonth, currentday, currentyear = CalendarGetDate()
+	local tmpStr = ""
+	local tmpStrLen = 0
 
 	font2:SetText("")
 	for eventIndex = 1, numguildEvents do
@@ -231,11 +276,14 @@ local function GetGuildEvents()
 			local title2, hour2, minute2, calendarType2, _, _, _, _, inviteStatus, invitedBy = CalendarGetDayEvent(monthOffset, day, i)
 				if (inviteStatus == 8) and (calendarType2 == "GUILD_EVENT") and not checkDoubleEvents(title2, day, monthOffset, hour2, minute2, tmpTable) then
 					pendinginvites = pendinginvites + 1
-					if pendinginvites > 1 then
+					if (pendinginvites > 1) then
 						font2:SetText(string.format(L["GuildEvents"], pendinginvites))
-					else
+					elseif (pendinginvites == 1) then
 						font2:SetText(L["GuildEvent"])
 					end
+
+					checkRemovedEvents()
+
 					if not frame:IsShown() then
 						button:Show()
 						frame:Show()
@@ -246,6 +294,10 @@ local function GetGuildEvents()
 	end
 	if CalendarFrame and CalendarFrame:IsShown() then
 		frame:Hide()
+	end
+
+	if frame:IsShown() then
+		checkRemovedEvents()
 	end
 end
 
@@ -273,16 +325,25 @@ local function eventHandler(self, event, ...)
 		end
 		frame:UnregisterEvent("PLAYER_ENTERING_WORLD")
 	elseif event == "CALENDAR_UPDATE_PENDING_INVITES" or event == "CALENDAR_UPDATE_GUILD_EVENTS" or event == "CALENDAR_UPDATE_EVENT_LIST" then
-		GetInvites()
-		GetGuildEvents()
+		if not inCombat then
+			GetInvites()
+			GetGuildEvents()
 
-		if addonLoaded then
-			CheckToday()
+			if addonLoaded then
+				CheckToday()
+			else
+				todayCheck = false
+			end
 		else
-			todayCheck = false
+			invitesInCombat = true
 		end
+	elseif event == "PLAYER_REGEN_ENABLED" then
+		inCombat = false
+	elseif event == "PLAYER_REGEN_DISABLED" then
+		inCombat = true
 	end
 end
+
 frame:SetScript("OnEvent", eventHandler)
 
 local textFrame = CreateFrame("Frame")
@@ -324,6 +385,13 @@ notifyTimer:SetScript("OnUpdate", function (self, elapsed)
 		elapsedTime = 0
 	end
 
+	if invitesInCombat and not inCombat then
+		GetInvites()
+		GetGuildEvents()
+		CheckToday()
+		invitesInCombat = false
+	end
+
 	if iTimerCanStart and not checkTimers then
 		checkTimers = true
 		cAnz = table.maxn(EventNotifies)
@@ -345,13 +413,13 @@ notifyTimer:SetScript("OnUpdate", function (self, elapsed)
 							if (lastTime == 0) then
 								lastTime = currTime + 180
 								leftTime = math.modf((EventNotifies[cIndex][EventNotifies[cIndex].Name][i].CalendarTime - currTime) / 60)
-								if (leftTime >= 3) and not fading then
+								if ((leftTime >= 3) and not fading) or ((leftTime >= 0) and inCombat and not fading) then
 									fadeTime = currTime + 15
 									fading = true
 									tFont:SetText(string.format(L["TxtEventStartsSoon"], EventNotifies[cIndex].Name,
 																EventNotifies[cIndex][EventNotifies[cIndex].Name][i].EventTitle, leftTime))
 									UIFrameFadeIn(textFrame, 3, 0, 1)
-								elseif (leftTime >= 0) then
+								elseif (leftTime >= 0) and not inCombat then
 									font:SetText(string.format(L["DlgEventStartsSoon"], EventNotifies[cIndex][EventNotifies[cIndex].Name][i].EventTitle, leftTime))
 									font2:SetText("")
 									font3:SetText("")
@@ -385,13 +453,13 @@ notifyTimer:SetScript("OnUpdate", function (self, elapsed)
 											if (lastTime == 0) then
 												lastTime = currTime + 180
 												leftTime = math.modf((EventNotifies[cInd][EventNotifies[cInd].Name][i2].CalendarTime - currTime) / 60)
-												if (leftTime >= 3) and not fading then
+												if ((leftTime >= 3) and not fading) or ((leftTime >= 0) and inCombat and not fading) then
 													fadeTime = currTime + 15
 													fading = true
 													tFont:SetText(string.format(L["TxtEventStartsSoon"], EventNotifies[cInd].Name,
 																				EventNotifies[cInd][EventNotifies[cInd].Name][i2].EventTitle, leftTime))
 													UIFrameFadeIn(textFrame, 3, 0, 1)
-												elseif (leftTime >= 0) then
+												elseif (leftTime >= 0) and not inCombat then
 													font:SetText(string.format(L["Dlg2EventStartsSoon"], EventNotifies[cInd].Name,
 																			   EventNotifies[cInd][EventNotifies[cInd].Name][i2].EventTitle, leftTime))
 													font2:SetText("")
@@ -431,13 +499,13 @@ notifyTimer:SetScript("OnUpdate", function (self, elapsed)
 										if (lastTime == 0) then
 											lastTime = currTime + 180
 											leftTime = math.modf((EventNotifies[cInd][EventNotifies[cInd].Name][i2].CalendarTime - currTime) / 60)
-											if (leftTime >= 3) and not fading then
+											if ((leftTime >= 3) and not fading) or ((leftTime >= 0) and inCombat and not fading) then
 												fadeTime = currTime + 15
 												fading = true
 												tFont:SetText(string.format(L["TxtEventStartsSoon"], EventNotifies[cInd].Name,
 																			EventNotifies[cInd][EventNotifies[cInd].Name][i2].EventTitle, leftTime))
 												UIFrameFadeIn(textFrame, 3, 0, 1)
-											elseif (leftTime >= 0) then
+											elseif (leftTime >= 0) and not inCombat then
 												font:SetText(string.format(L["Dlg2EventStartsSoon"], EventNotifies[cInd].Name,
 																			EventNotifies[cInd][EventNotifies[cInd].Name][i2].EventTitle, leftTime))
 												font2:SetText("")
@@ -476,13 +544,13 @@ notifyTimer:SetScript("OnUpdate", function (self, elapsed)
 								if (lastTime == 0) then
 									lastTime = currTime + 180
 									leftTime = math.modf((EventNotifies[cInd][EventNotifies[cInd].Name][i2].CalendarTime - currTime) / 60)
-									if (leftTime >= 3) and not fading then
+									if ((leftTime >= 3) and not fading) or ((leftTime >= 0) and inCombat and not fading) then
 										fadeTime = currTime + 15
 										fading = true
 										tFont:SetText(string.format(L["TxtEventStartsSoon"], EventNotifies[cInd].Name,
 																	EventNotifies[cInd][EventNotifies[cInd].Name][i2].EventTitle, leftTime))
 										UIFrameFadeIn(textFrame, 3, 0, 1)
-									elseif (leftTime >= 0) then
+									elseif (leftTime >= 0) and not inCombat then
 										font:SetText(string.format(L["Dlg2EventStartsSoon"], EventNotifies[cInd].Name,
 																   EventNotifies[cInd][EventNotifies[cInd].Name][i2].EventTitle, leftTime))
 										font2:SetText("")

@@ -18,6 +18,7 @@ Ld["GuildEvents"] = "You have %s pending guild events!"
 Ld["TxtEventStartsSoon"] = "|cFFFF0000%s: |cff00E5EE%s |rstarts in |cff00E5EE%d |rminutes"
 Ld["DlgEventStartsSoon"] = "%s starts in %d rminutes"
 Ld["Dlg2EventStartsSoon"] = "|cFFFF0000%s: |r%s starts in %d rminutes"
+Ld["EventRemoved"] = "It was probably removed an event."
 
 if locale == "deDE" then do end
 	La["View"] = "Zeigen"
@@ -31,6 +32,7 @@ if locale == "deDE" then do end
 	La["TxtEventStartsSoon"] = "|cFFFF0000%s: |cff00E5EE%s |rbeginnt in |cff00E5EE%d |rMinuten"
 	La["DlgEventStartsSoon"] = "%s beginnt in %d Minuten"
 	La["Dlg2EventStartsSoon"] = "|cFFFF0000%s: |r%s beginnt in %d Minuten"
+	La["EventRemoved"] = "Es wurde vermutlich eine Veranstaltung entfernt."
 elseif locale == "frFR" then do end
 	La["View"] = "Voir"
 	La["Ok"] = "OK"
@@ -43,4 +45,5 @@ elseif locale == "frFR" then do end
 	La["TxtEventStartsSoon"] = "|cFFFF0000 %s:|cff00E5EE%s |rcommence en |cff00E5EE%d |rminutes"
 	La["DlgEventStartsSoon"] = "%s commence en %d minutes"
 	La["Dlg2EventStartsSoon"] = "|cFFFF0000%s: |r%s commence en %d minutes"
+	La["EventRemoved"] = "Il a \195\169t\195\169 probablement enlev\195\169 un \195\169v\195\169nement."
 end
