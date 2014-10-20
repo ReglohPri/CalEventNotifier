@@ -1,9 +1,10 @@
-## Interface: 50400
+## Interface: 60000
 ## Title: CalEventNotifier
-## Notes: Notifies you of new calendar event invites and reminds of upcoming events on all characters
+## Notes: Notifies you of new calendar event invites and reminds of upcoming events on all characters and realms
 ## SavedVariables: EventNotifies
+## SavedVariablesPerCharacter: MsgToGuild
 ## Author: Reglohpri
-## Version: 1.05
+## Version: 1.06
 
 locale.lua
 CalEventNotifier.lua
