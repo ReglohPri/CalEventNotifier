@@ -4,7 +4,7 @@
 ## SavedVariables: EventNotifies
 ## SavedVariablesPerCharacter: MsgToGuild
 ## Author: Reglohpri
-## Version: 1.06
+## Version: 1.07
 
 locale.lua
 CalEventNotifier.lua
