@@ -1,4 +1,4 @@
-## Interface: 60000
+## Interface: 60100
 ## Title: CalEventNotifier
 ## Notes: Notifies you of new calendar event invites and reminds of upcoming events on all characters and realms
 ## SavedVariables: EventNotifies
