@@ -732,7 +732,7 @@ notifyTimer:SetScript("OnUpdate", function (self, elapsed)
 									font3:SetText("")
 									button:Show()
 									frame:Show()
-									PlaySound("AlarmClockwarning3")
+									PlaySound(12889) --AlarmClockwarning3
 									if CalendarFrame and CalendarFrame:IsVisible() then
 										frame:Hide()
 									end
@@ -774,7 +774,7 @@ notifyTimer:SetScript("OnUpdate", function (self, elapsed)
 													button:Hide()
 													okButton:Show()
 													frame:Show()
-													PlaySound("AlarmClockwarning3")
+													PlaySound(12889) --AlarmClockwarning3
 												end
 											elseif (currTime >= lastTime) then
 												lastTime = 0
@@ -820,7 +820,7 @@ notifyTimer:SetScript("OnUpdate", function (self, elapsed)
 												button:Hide()
 												okButton:Show()
 												frame:Show()
-												PlaySound("AlarmClockwarning3")
+												PlaySound(12889) --AlarmClockwarning3
 											end
 										elseif (currTime >= lastTime) then
 											lastTime = 0
@@ -865,7 +865,7 @@ notifyTimer:SetScript("OnUpdate", function (self, elapsed)
 										button:Hide()
 										okButton:Show()
 										frame:Show()
-										PlaySound("AlarmClockwarning3")
+										PlaySound(12889) --AlarmClockwarning3
 									end
 								elseif (currTime >= lastTime) then
 									lastTime = 0
