@@ -40,6 +40,7 @@ local lastNotifySender = ""
 local lastNotifyLeader = ""
 local iCanSendToGuild = true
 local iamSenderNow = false
+local ifInitCEN = false
 local GuildMembersLoaded = false
 
 local CEN_OFFLINE = string.format(ERR_FRIEND_OFFLINE_S, "(.+)")
@@ -132,7 +133,7 @@ end
 
 local function AddonMessage(msg)
 	if iamInGuild then
-		SendAddonMessage("DMD_CEN", msg, "GUILD")
+		C_ChatInfo.SendAddonMessage("DMD_CEN", msg, "GUILD")
 	else
 		CPrint("Yor aren't in a guild")
 	end
@@ -272,8 +273,9 @@ function checkRemovedEvents()
 end
 
 local function CheckToday()
-	local curweekday, curmonth, curday, curyear = CalendarGetDate()
-	local numtodaysEvents = CalendarGetNumDayEvents(0, curday)
+	--local curweekday, curmonth, curday, curyear = CalendarGetDate()
+	local curweekday, curmonth, curday, curyear = tonumber(date("%w")),tonumber(date("%m")),tonumber(date("%d")),tonumber(date("%Y"))
+	local numtodaysEvents = C_Calendar.GetNumDayEvents(0, curday)
 	local todaysevents = 0
 
 	MyChar = UnitName("player")
@@ -286,9 +288,18 @@ local function CheckToday()
 
 	if numtodaysEvents ~= 0 then
 		for i = 1, numtodaysEvents do
-			local title3, hour3, minute3, calendarType3, _, _, _, _, inviteStatus3, invitedBy3 = CalendarGetDayEvent(0, curday, i)
-			if calendarType3 == "PLAYER" or calendarType3 == "GUILD_EVENT" then
-				if inviteStatus3 ~= 8 and inviteStatus3 ~= 3 and inviteStatus3 ~= 5 then
+			--local title3, hour3, minute3, calendarType3, _, _, _, _, inviteStatus3, invitedBy3 = C_Calendar.GetDayEvent(0, curday, i)
+			local getDayEvent = C_Calendar.GetDayEvent(0, curday, i)
+			local title3 = getDayEvent.title
+			local startTime = getDayEvent.startTime
+			local hour3 = startTime.hour
+			local minute3 = startTime.minute
+			local calendarType3 = getDayEvent.calendarType
+			local inviteStatus3 = getDayEvent.inviteStatus
+			local invitedBy3 = getDayEvent.invitedBy
+
+			if calendarType3 == "PLAYER" or calendarType3 == "GUILD_EVENT" or calendarType3 == "COMMUNITY_EVENT" then
+				if inviteStatus3 ~= 8 and inviteStatus3 ~= 3 and inviteStatus3 ~= 5 and inviteStatus3 ~= 1 then
 					InsertNotifies(MyChar, EventNotifies, title3, curyear, curmonth, curday, hour3, minute3)
 					todaysevents = todaysevents + 1
 					if (todaysevents > 1) then
@@ -323,12 +334,10 @@ local function CheckToday()
 end
 
 local function GetInvites()
-	local MyPendingInvites = CalendarGetNumPendingInvites()
-	local tmpStr = ""
-	local tmpStrLen = 0
+	local MyPendingInvites = C_Calendar.GetNumPendingInvites()
 
-	font:SetText("")
 	if MyPendingInvites ~= 0 then
+		font:SetText("")
 		if (MyPendingInvites > 1) then
 			font:SetText(string.format(L["Pending Invites"], MyPendingInvites))
 		elseif (MyPendingInvites == 1) then
@@ -409,23 +418,35 @@ end
 
 local function GetGuildEvents()
 	local pendinginvites = 0
-	local numguildEvents = CalendarGetNumGuildEvents()
+	local numguildEvents = C_Calendar.GetNumGuildEvents()
 	local tmpTable = {}
-	local currentweekday, currentmonth, currentday, currentyear = CalendarGetDate()
+	local currentweekday, currentmonth, currentday, currentyear = tonumber(date("%w")),tonumber(date("%m")),tonumber(date("%d")),tonumber(date("%Y")) --CalendarGetDate()
 	local tmpStr = ""
 	local tmpStrLen = 0
 
 	font2:SetText("")
 	for eventIndex = 1, numguildEvents do
 
-		local month, day, weekday, hour, minute, eventType, title, calendarType, textureName = CalendarGetGuildEventInfo(eventIndex)
+		--local month, day, weekday, hour, minute, eventType, title, calendarType, textureName = C_Calendar.GetGuildEventInfo(eventIndex)
+		local eventInfo = C_Calendar.GetGuildEventInfo(eventIndex)
+		local month = eventInfo.month
+		local day = eventInfo.monthDay
 		local monthOffset = month - currentmonth
-		local numEvents = CalendarGetNumDayEvents(monthOffset, day)
+		local numEvents = C_Calendar.GetNumDayEvents(monthOffset, day)
 
 		if numEvents ~= 0 then
 			for i = 1, numEvents do
-			local title2, hour2, minute2, calendarType2, _, _, _, _, inviteStatus, invitedBy = CalendarGetDayEvent(monthOffset, day, i)
-				if (inviteStatus == 8) and (calendarType2 == "GUILD_EVENT") and not checkDoubleEvents(title2, day, monthOffset, hour2, minute2, tmpTable) then
+			--local title2, hour2, minute2, calendarType2, _, _, _, _, inviteStatus, invitedBy = C_Calendar.GetDayEvent(monthOffset, day, i)
+				local dayEvent = C_Calendar.GetDayEvent(monthOffset, day, i)
+				local title2 = dayEvent.title
+				local startTime = dayEvent.startTime
+				local hour2 = startTime.hour
+				local minute2 = startTime.minute
+				local calendarType2 = dayEvent.calendarType
+				local inviteStatus = dayEvent.inviteStatus
+				local invitedBy = dayEvent.invitedBy
+
+				if (inviteStatus == 8) and ((calendarType2 == "GUILD_EVENT") or (calendarType2 == "GUILD_ANNOUNCEMENT")) and not checkDoubleEvents(title2, day, monthOffset, hour2, minute2, tmpTable) then
 					pendinginvites = pendinginvites + 1
 					if (pendinginvites > 1) then
 						font2:SetText(string.format(L["GuildEvents"], pendinginvites))
@@ -476,6 +497,10 @@ local function toggleMsgToGuild()
 end
 
 local function initCEN()
+    if ifInitCEN then
+		return
+	end
+
 	iamInGuild = IsInGuild()
 	MyChar = UnitName("player")
 	MyRealm = GetRealmName()
@@ -500,6 +525,8 @@ local function initCEN()
 	else
 		CPrint(L["NoGuild"])
 	end
+
+	ifInitCEN = true
 end
 
 local function eventHandler(self, event, ...)
@@ -604,9 +631,9 @@ local function eventHandler(self, event, ...)
 			end
 		end
 	elseif event == "PLAYER_ENTERING_WORLD" then
-		local _, todaysmonth, _, todaysyear = CalendarGetDate()
-		CalendarSetAbsMonth(todaysmonth, todaysyear)
-		OpenCalendar()
+		local _, todaysmonth, _, todaysyear = tonumber(date("%w")),tonumber(date("%m")),tonumber(date("%d")),tonumber(date("%Y")) --CalendarGetDate()
+		C_Calendar.SetAbsMonth(todaysmonth, todaysyear)
+		C_Calendar.OpenCalendar()
 		GetInvites()
 		GetGuildEvents()
 
@@ -619,6 +646,14 @@ local function eventHandler(self, event, ...)
 		frame:UnregisterEvent("PLAYER_ENTERING_WORLD")
 	elseif event == "CALENDAR_UPDATE_PENDING_INVITES" or event == "CALENDAR_UPDATE_GUILD_EVENTS" or event == "CALENDAR_UPDATE_EVENT_LIST" then
 		if (not inCombat) and (not checkTimers) then
+			if (not ifInitCEN) then
+			    initCEN()
+			end
+
+			font:SetText("")
+			font2:SetText("")
+			font3:SetText("")
+
 			GetInvites()
 			GetGuildEvents()
 
@@ -637,7 +672,7 @@ local function eventHandler(self, event, ...)
 	end
 end
 
-if not RegisterAddonMessagePrefix("DMD_CEN") then
+if not C_ChatInfo.RegisterAddonMessagePrefix("DMD_CEN") then
 	CPrint("Error: unable to register CEN addon message prefix (reached client side addon message filter limit), synchronization with guild will be unavailable")
 end
 
