@@ -1,10 +1,10 @@
-## Interface: 80100
+## Interface: 80300
 ## Title: CalEventNotifier
 ## Notes: Notifies you of new calendar event invites and reminds of upcoming events on all characters and realms
 ## SavedVariables: EventNotifies
 ## SavedVariablesPerCharacter: MsgToGuild
 ## Author: Reglohpri
-## Version: 1.14
+## Version: 1.16
 
 locale.lua
 CalEventNotifier.lua

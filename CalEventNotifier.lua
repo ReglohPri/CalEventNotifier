@@ -308,7 +308,7 @@ local function CheckToday()
 						font3:SetText(L["Scheduled Event"])
 					end
 
-					checkRemovedEvents()
+					--checkRemovedEvents()
 
 					if not frame:IsShown() then
 						button:Show()
@@ -326,9 +326,9 @@ local function CheckToday()
 		frame:Hide()
 	end
 
-	if frame:IsShown() then
-		checkRemovedEvents()
-	end
+	--if frame:IsShown() then
+	--	checkRemovedEvents()
+	--end
 
 	iTimerCanStart = true
 end
@@ -336,7 +336,7 @@ end
 local function GetInvites()
 	local MyPendingInvites = C_Calendar.GetNumPendingInvites()
 
-	if MyPendingInvites ~= 0 then
+	if (MyPendingInvites ~= 0) then
 		font:SetText("")
 		if (MyPendingInvites > 1) then
 			font:SetText(string.format(L["Pending Invites"], MyPendingInvites))
@@ -344,8 +344,7 @@ local function GetInvites()
 			font:SetText(L["Pending Invite"])
 		end
 
-		checkRemovedEvents()
-
+		--checkRemovedEvents()
 		if not frame:IsShown() then
 			button:Show()
 			frame:Show()
@@ -355,9 +354,9 @@ local function GetInvites()
 		frame:Hide()
 	end
 
-	if frame:IsShown() then
-		checkRemovedEvents()
-	end
+	--if frame:IsShown() then
+	--	checkRemovedEvents()
+	--end
 end
 
 local function ReInitNotifies(cArray)
@@ -434,7 +433,7 @@ local function GetGuildEvents()
 		local monthOffset = month - currentmonth
 		local numEvents = C_Calendar.GetNumDayEvents(monthOffset, day)
 
-		if numEvents ~= 0 then
+		if (numEvents ~= 0) then
 			for i = 1, numEvents do
 			--local title2, hour2, minute2, calendarType2, _, _, _, _, inviteStatus, invitedBy = C_Calendar.GetDayEvent(monthOffset, day, i)
 				local dayEvent = C_Calendar.GetDayEvent(monthOffset, day, i)
@@ -454,8 +453,7 @@ local function GetGuildEvents()
 						font2:SetText(L["GuildEvent"])
 					end
 
-					checkRemovedEvents()
-
+					--checkRemovedEvents()
 					if not frame:IsShown() then
 						button:Show()
 						frame:Show()
@@ -468,9 +466,9 @@ local function GetGuildEvents()
 		frame:Hide()
 	end
 
-	if frame:IsShown() then
-		checkRemovedEvents()
-	end
+	--if frame:IsShown() then
+	--	checkRemovedEvents()
+	--end
 end
 
 local function toggleMsgToGuild()
@@ -643,6 +641,7 @@ local function eventHandler(self, event, ...)
 		else
 			todayCheck = false
 		end
+		checkRemovedEvents()
 		frame:UnregisterEvent("PLAYER_ENTERING_WORLD")
 	elseif event == "CALENDAR_UPDATE_PENDING_INVITES" or event == "CALENDAR_UPDATE_GUILD_EVENTS" or event == "CALENDAR_UPDATE_EVENT_LIST" then
 		if (not inCombat) and (not checkTimers) then
@@ -662,6 +661,8 @@ local function eventHandler(self, event, ...)
 			else
 				todayCheck = false
 			end
+
+			checkRemovedEvents()
 		else
 			invitesInCombat = true
 		end
