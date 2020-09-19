@@ -1,11 +1,10 @@
 package-as: CalEventNotifier
-
-manual-changelog:
-    filename: changelog.txt
-    markup-type: markdown
+enable-nolib-creation: no
 
 ignore:
     - README.md
     - LICENSE.md
+    
+manual-changelog: CHANGELOG.txt
 
-enable-nolib-creation: no
+license-output: LICENSE.txt
