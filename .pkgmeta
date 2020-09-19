@@ -1,0 +1,11 @@
+package-as: CalEventNotifier
+
+manual-changelog:
+    filename: changelog.txt
+    markup-type: markdown
+
+ignore:
+    - README.md
+    - LICENSE.md
+
+enable-nolib-creation: no
