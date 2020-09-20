@@ -45,13 +45,16 @@ local GuildMembersLoaded = false
 
 local CEN_OFFLINE = string.format(ERR_FRIEND_OFFLINE_S, "(.+)")
 
-local frame = CreateFrame("Frame")
+-- Changed for Patch 9.0.1 - Shadowlands
+--local frame = CreateFrame("Frame")
+local frame = CreateFrame("Frame", nil, UIParent, "BackdropTemplate")
 frame:Hide();
 frame:SetHeight(120)
 frame:SetWidth(430)
 frame:SetPoint("CENTER", UIParent, "CENTER", 0, 50)
 frame:EnableMouse(true)
-frame:SetBackdrop({
+-- Changed for Patch 9.0.1 - Shadowlands
+--[[frame:SetBackdrop({
     bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
     edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
     tile = true,
@@ -64,6 +67,22 @@ frame:SetBackdrop({
         bottom = 11
     }
 })
+--]]
+frame.backdropInfo = {
+    bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
+    edgeFile = "Interface\\DialogFrame\\UI-DialogBox-Border",
+    tile = true,
+    tileSize = 32,
+    edgeSize = 32,
+    insets = {
+        left = 11,
+        right = 12,
+        top = 12,
+        bottom = 11
+    }
+}
+frame:ApplyBackdrop()
+-- Ende changes for Patch 9.0.1
 
 frame:RegisterEvent("ADDON_LOADED")
 frame:RegisterEvent("CHAT_MSG_ADDON")
